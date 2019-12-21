@@ -2,6 +2,8 @@ import sys
 import re
 import datetime
 import calendar
+import operator
+import cmd
 from typing import Iterable, Optional, Callable
 
 
@@ -60,12 +62,35 @@ class TodoCalendar(calendar.TextCalendar):
         days = '\n'.join(make_week_string(week) for week in self.monthdayscalendar(year, month))
         return f'{month_str} {year}\n{week_header}\n{days}\n'
 
+
+class CLI(cmd.Cmd):
+    intro = 'Welcome to the todo.txt calendar. Type help or ? for help.\n'
+    prompt = 'top level> '
+
+    def do_m(self, arg: str) -> None:
+        # view month (like in Google Calendar)
+        TodoCalendar(todos, 6).prmonth(
+            datetime.date.today().year, datetime.date.today().month, 8)
+
+    def do_due(self, arg: str) -> None:
+        def month_equal(todo: Todo) -> bool:
+            return bool(todo.due_date and todo.due_date.month == 12)
+        # list tasks due in the selected month in ascending due date order
+        print('Due this month:')
+
+        months_todos = filter(month_equal, todos)
+        get_due_date: Callable[[Todo], datetime.date] = operator.attrgetter('due_date')
+        months_todos_sorted = sorted(months_todos, key=get_due_date)
+        print(*months_todos_sorted, sep='\n')
+
+
 def parse_todos(string: str) -> Iterable[Todo]:
     for line in string.splitlines():
         yield Todo(line)
 
 
-todo_file_content = sys.stdin.read()
-todos = parse_todos(todo_file_content)
-for todo in todos:
-    print(todo)
+with open(sys.argv[1]) as file:
+    todo_file_content = file.read()
+todos = tuple(parse_todos(todo_file_content))
+
+CLI().cmdloop()
