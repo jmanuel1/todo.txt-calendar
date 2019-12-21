@@ -10,7 +10,9 @@ class Todo:
     __due_pattern = r'(?:\s+|^)due:(' + __date_pattern + r')\s*'
 
     def __init__(self, string: str):
-        start_pattern = r'^((\([A-Z]\))|x)\s(' + self.__date_pattern + r'\s){1,2}'
+        priority_or_done_pattern = r'^((\([A-Z]\))|x)'
+        start_pattern = (priority_or_done_pattern
+                         + r'\s(' + self.__date_pattern + r'\s){1,2}')
         self.__text = re.sub(start_pattern, '', string)
         # don't remove + and @ from text since we can use them as part of
         # sentences
